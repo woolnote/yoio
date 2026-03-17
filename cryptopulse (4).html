@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CryptoPulse · AI Prediction · 加密货币预测</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161d;
+    --bg3: #1a1e27;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8eaf0;
+    --text2: #8a8f9e;
+    --text3: #555b6e;
+    --gold: #f0a500;
+    --gold-dim: rgba(240,165,0,0.15);
+    --up: #00c987;
+    --up-dim: rgba(0,201,135,0.12);
+    --down: #e24b4a;
+    --down-dim: rgba(226,75,74,0.12);
+    --neutral: #6b7280;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  html { background: var(--bg); color: var(--text); font-family: 'Space Mono', monospace; }
+
+  body { min-height: 100vh; }
+
+  /* ── HEADER ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,15,20,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 24px;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo span { color: var(--gold); }
+  .logo-sub { font-size: 10px; color: var(--text3); font-family: 'Noto Sans SC', sans-serif; letter-spacing: 0.5px; margin-top: 1px; }
+
+  .header-right { display: flex; align-items: center; gap: 12px; }
+
+  .lang-toggle { display: flex; gap: 4px; }
+  .lang-btn {
+    font-size: 11px; padding: 5px 12px; border-radius: 20px;
+    border: 0.5px solid var(--border2); cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    background: transparent; color: var(--text2);
+    transition: all 0.2s;
+  }
+  .lang-btn.active { background: var(--gold); color: #1a1200; border-color: var(--gold); font-weight: 700; }
+
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--up); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1160px; margin: 0 auto; padding: 24px 20px; }
+
+  /* ── TICKER ── */
+  .ticker-wrap { overflow: hidden; border: 0.5px solid var(--border); border-radius: var(--radius); background: var(--bg2); margin-bottom: 24px; padding: 9px 0; }
+  .ticker-inner { display: flex; gap: 40px; animation: ticker 28s linear infinite; white-space: nowrap; }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .ticker-item { font-size: 12px; display: flex; gap: 8px; }
+  .ticker-sym { font-weight: 700; color: var(--text); }
+  .ticker-price { color: var(--text2); }
+  .ticker-up { color: var(--up); }
+  .ticker-down { color: var(--down); }
+
+  /* ── SEARCH ── */
+  .search-row { display: flex; gap: 10px; margin-bottom: 24px; }
+  .search-input {
+    flex: 1; padding: 11px 16px;
+    border-radius: var(--radius); border: 0.5px solid var(--border2);
+    background: var(--bg2); color: var(--text);
+    font-family: 'Space Mono', monospace; font-size: 13px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--gold); }
+  .search-input::placeholder { color: var(--text3); }
+  .predict-btn {
+    padding: 11px 22px; background: var(--gold); color: #1a1200;
+    border: none; border-radius: var(--radius);
+    font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+  }
+  .predict-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .predict-btn:active { transform: translateY(0); }
+
+  /* ── GRID ── */
+  .main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .main-grid { grid-template-columns: 1fr; } }
+
+  /* ── CARDS ── */
+  .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 16px; }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .card-title-cn { font-size: 11px; color: var(--text3); font-family: 'Noto Sans SC', sans-serif; margin-bottom: 14px; }
+
+  /* ── COINS ROW ── */
+  .coins-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  @media (max-width: 600px) { .coins-grid { grid-template-columns: repeat(2, 1fr); } }
+  .coin-card {
+    background: var(--bg2); border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg); padding: 14px; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .coin-card:hover { border-color: var(--border2); }
+  .coin-card.selected { border-color: var(--gold); background: var(--bg3); }
+  .coin-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .coin-sym { font-size: 15px; font-weight: 700; color: var(--text); }
+  .coin-name { font-size: 10px; color: var(--text3); font-family: 'Noto Sans SC', sans-serif; margin-top: 1px; }
+  .coin-price-wrap { text-align: right; }
+  .coin-price { font-size: 14px; font-weight: 700; }
+  .coin-change { font-size: 10px; margin-top: 1px; }
+  .text-up { color: var(--up); }
+  .text-down { color: var(--down); }
+  .badge {
+    display: inline-block; font-size: 10px; padding: 3px 9px;
+    border-radius: 20px; font-weight: 700; letter-spacing: 0.2px;
+  }
+  .badge-buy { background: var(--up-dim); color: var(--up); }
+  .badge-sell { background: var(--down-dim); color: var(--down); }
+  .badge-hold { background: rgba(107,114,128,0.15); color: var(--neutral); }
+
+  /* ── CHART ── */
+  .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .tf-row { display: flex; gap: 4px; margin-top: 4px; }
+  .tf-btn {
+    font-size: 10px; padding: 4px 9px; border-radius: 6px;
+    border: 0.5px solid var(--border); background: transparent;
+    color: var(--text3); cursor: pointer; font-family: 'Space Mono', monospace;
+    transition: all 0.15s;
+  }
+  .tf-btn.active { background: var(--gold); color: #1a1200; border-color: var(--gold); font-weight: 700; }
+  .chart-legend { display: flex; gap: 14px; margin-bottom: 10px; }
+  .legend-item { font-size: 11px; color: var(--text2); display: flex; align-items: center; gap: 5px; }
+  .legend-line { width: 18px; height: 2px; border-radius: 2px; }
+
+  /* ── METRICS ── */
+  .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  @media (max-width: 600px) { .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
+  .metric-card { background: var(--bg3); border-radius: var(--radius); padding: 12px; }
+  .metric-label { font-size: 10px; color: var(--text3); }
+  .metric-label-cn { font-size: 9px; color: var(--text3); font-family: 'Noto Sans SC', sans-serif; margin-top: 1px; }
+  .metric-val { font-size: 18px; font-weight: 700; color: var(--text); margin-top: 5px; }
+
+  /* ── PREDICTION BARS ── */
+  .pred-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .pred-row:last-child { margin-bottom: 0; }
+  .pred-label { font-size: 11px; color: var(--text2); width: 54px; flex-shrink: 0; }
+  .pred-bar-bg { flex: 1; background: var(--bg3); border-radius: 4px; height: 8px; overflow: hidden; }
+  .pred-bar-fill { height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+  .pred-pct { font-size: 12px; font-weight: 700; min-width: 36px; text-align: right; }
+
+  /* ── SIDEBAR ── */
+  .fear-gauge { text-align: center; margin-bottom: 14px; }
+  .gauge-val { font-size: 40px; font-weight: 700; color: var(--gold); }
+  .gauge-label { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .gauge-sub { font-size: 10px; color: var(--text3); font-family: 'Noto Sans SC', sans-serif; }
+  .gauge-bar-bg { background: var(--bg3); border-radius: 4px; height: 6px; margin: 10px 0; overflow: hidden; }
+  .gauge-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #e24b4a 0%, #f0a500 50%, #00c987 100%); width: 62%; }
+
+  /* ── NEWS ── */
+  .news-item { padding: 12px 0; border-top: 0.5px solid var(--border); }
+  .news-item:first-child { border-top: none; padding-top: 0; }
+  .news-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; vertical-align: middle; flex-shrink: 0; }
+  .news-en { font-size: 12px; color: var(--text); line-height: 1.6; }
+  .news-cn { font-size: 11px; color: var(--text2); font-family: 'Noto Sans SC', sans-serif; line-height: 1.6; margin-top: 3px; }
+  .news-time { font-size: 10px; color: var(--text3); margin-top: 4px; }
+
+  /* ── AI BOX ── */
+  .ai-insight { background: var(--bg3); border: 0.5px solid rgba(240,165,0,0.25); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; }
+  .ai-tag { display: inline-block; font-size: 10px; background: var(--gold-dim); color: var(--gold); padding: 3px 9px; border-radius: 20px; font-weight: 700; margin-bottom: 8px; }
+  .ai-text { font-size: 12px; color: var(--text2); line-height: 1.7; }
+  .ai-text-cn { font-size: 11px; color: var(--text3); font-family: 'Noto Sans SC', sans-serif; line-height: 1.7; margin-top: 5px; }
+
+  /* ── FOOTER ── */
+  footer { text-align: center; padding: 32px 20px; border-top: 0.5px solid var(--border); font-size: 11px; color: var(--text3); }
+  footer span { color: var(--text2); }
+
+  /* ── ANIMATIONS ── */
+  .fade-in { animation: fadeIn 0.5s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div>
+    <div class="logo">CRYPTO<span>PULSE</span></div>
+    <div class="logo-sub">加密货币预测平台 · AI Prediction Platform</div>
+  </div>
+  <div class="header-right">
+    <div class="live-dot" title="Live data"></div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('zh')">中文</button>
+    </div>
+  </div>
+</header>
+
+<!-- TICKER -->
+<div class="container" style="padding-bottom:0;">
+  <div class="ticker-wrap">
+    <div class="ticker-inner" id="tickerInner"></div>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="container" style="padding-top:16px; padding-bottom:0;">
+  <div class="search-row">
+    <input class="search-input" id="searchInput" type="text" placeholder="Search coin / 搜索币种 (e.g. BTC, ETH, SOL)..." />
+    <button class="predict-btn" onclick="runPredict()">▶ <span id="predictLabel">Predict</span></button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- COIN CARDS -->
+  <div class="coins-grid fade-in" id="coinsGrid"></div>
+
+  <!-- METRICS -->
+  <div class="metrics-grid fade-in" id="metricsGrid"></div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+    <!-- LEFT COLUMN -->
+    <div>
+
+      <!-- CHART CARD -->
+      <div class="card fade-in">
+        <div class="chart-header">
+          <div>
+            <div class="card-title" id="chartTitle">BTC/USDT Price Chart</div>
+            <div class="card-title-cn" id="chartTitleCn">比特币/美元 7日价格走势</div>
+            <div class="chart-legend">
+              <div class="legend-item"><div class="legend-line" style="background:#f0a500;"></div><span id="legendActual">Actual</span></div>
+              <div class="legend-item"><div class="legend-line" style="background:#00c987; border-top: 2px dashed #00c987; height:0;width:18px;"></div><span id="legendPred">Predicted</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="tf-row">
+              <button class="tf-btn active" onclick="setTf(this,'1D')">1D</button>
+              <button class="tf-btn" onclick="setTf(this,'1W')">1W</button>
+              <button class="tf-btn" onclick="setTf(this,'1M')">1M</button>
+              <button class="tf-btn" onclick="setTf(this,'3M')">3M</button>
+            </div>
+          </div>
+        </div>
+        <div style="position:relative;width:100%;height:220px;">
+          <canvas id="priceChart" style="display:block;"></canvas>
+        </div>
+      </div>
+
+      <!-- AI INSIGHT -->
+      <div class="ai-insight fade-in">
+        <div class="ai-tag">✦ AI INSIGHT</div>
+        <div class="ai-text" id="aiText">Based on on-chain data and momentum indicators, BTC is showing strong accumulation signals. RSI at 58 suggests room for upside before overbought territory. Key resistance at $69,500.</div>
+        <div class="ai-text-cn" id="aiTextCn">基于链上数据和动量指标，BTC呈现强烈积累信号。RSI为58，表明在超买区域前仍有上涨空间。关键阻力位在69,500美元。</div>
+      </div>
+
+      <!-- PREDICTION CARD -->
+      <div class="card fade-in">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+          <div>
+            <div class="card-title" id="predTitle">7-Day AI Prediction</div>
+            <div class="card-title-cn" id="predTitleCn">7日人工智能预测</div>
+          </div>
+          <span class="badge badge-buy" style="font-size:11px;" id="overallSignal">BULLISH · 看涨</span>
+        </div>
+        <div id="predBars"></div>
+      </div>
+
+      <!-- NEWS -->
+      <div class="card fade-in">
+        <div class="card-title" id="newsTitle">Market Signals & News</div>
+        <div class="card-title-cn" id="newsTitleCn">市场信号与新闻</div>
+        <div id="newsList"></div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div>
+
+      <!-- FEAR & GREED -->
+      <div class="card fade-in">
+        <div class="card-title" id="fearTitle">Fear & Greed Index</div>
+        <div class="card-title-cn" id="fearTitleCn">恐惧与贪婪指数</div>
+        <div class="fear-gauge">
+          <div class="gauge-val">62</div>
+          <div class="gauge-label" id="fearLabel">Greed</div>
+          <div class="gauge-sub" id="fearLabelCn">贪婪</div>
+          <div class="gauge-bar-bg"><div class="gauge-bar-fill"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);">
+            <span id="fearText">Fear</span><span id="greedText">Greed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOP MOVERS -->
+      <div class="card fade-in">
+        <div class="card-title" id="moversTitle">Top Movers 24h</div>
+        <div class="card-title-cn" id="moversTitleCn">24小时涨跌幅</div>
+        <div id="moversList"></div>
+      </div>
+
+      <!-- DOMINANCE -->
+      <div class="card fade-in" style="margin-bottom:0;">
+        <div class="card-title" id="domTitle">BTC Dominance</div>
+        <div class="card-title-cn" id="domTitleCn">比特币市场占比</div>
+        <div style="position:relative;width:100%;height:160px;"><canvas id="domChart" style="display:block;"></canvas></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div><span>CryptoPulse</span> · AI-Powered Crypto Prediction · 人工智能加密货币预测</div>
+  <div style="margin-top:6px;">Data is for informational purposes only. Not financial advice. · 数据仅供参考，不构成投资建议。</div>
+</footer>
+
+<script>
+/* ────────────────────────────────────────────────────
+   DATA
+──────────────────────────────────────────────────── */
+const coins = [
+  { sym:'BTC', nameEn:'Bitcoin',  nameCn:'比特币', price:'$67,420', raw:67420, change:'+2.4%', up:true,  signal:'buy',  signalCn:'买入', signalClass:'badge-buy' },
+  { sym:'ETH', nameEn:'Ethereum', nameCn:'以太坊', price:'$3,510',  raw:3510,  change:'+1.1%', up:true,  signal:'buy',  signalCn:'买入', signalClass:'badge-buy' },
+  { sym:'SOL', nameEn:'Solana',   nameCn:'索拉纳', price:'$182',    raw:182,   change:'-0.8%', up:false, signal:'hold', signalCn:'持有', signalClass:'badge-hold' },
+  { sym:'BNB', nameEn:'BNB',      nameCn:'币安币', price:'$601',    raw:601,   change:'-1.3%', up:false, signal:'sell', signalCn:'卖出', signalClass:'badge-sell' },
+];
+
+const tickerData = [
+  ...coins,
+  { sym:'XRP', nameEn:'XRP', price:'$0.512', change:'+0.6%', up:true },
+  { sym:'ADA', nameEn:'Cardano', price:'$0.441', change:'-0.4%', up:false },
+  { sym:'DOGE',nameEn:'Dogecoin',price:'$0.152', change:'+3.1%', up:true },
+  { sym:'AVAX',nameEn:'Avalanche',price:'$36.40', change:'+1.8%', up:true },
+];
+
+const metrics = [
+  { en:'Market Cap',  cn:'总市值',     val:'$2.41T' },
+  { en:'24h Volume',  cn:'24h成交量',  val:'$98.4B' },
+  { en:'BTC Price',   cn:'BTC价格',    val:'$67,420' },
+  { en:'Active Coins',cn:'活跃币种',   val:'22,847' },
+];
+
+const predictions = [
+  { en:'Bullish',  cn:'看涨', pct:62, color:'#00c987' },
+  { en:'Neutral',  cn:'中立', pct:24, color:'#6b7280' },
+  { en:'Bearish',  cn:'看跌', pct:14, color:'#e24b4a' },
+];
+
+const movers = [
+  { sym:'DOGE', change:'+8.2%', up:true },
+  { sym:'PEPE', change:'+6.7%', up:true },
+  { sym:'ARB',  change:'-4.3%', up:false },
+  { sym:'OP',   change:'-3.1%', up:false },
+  { sym:'INJ',  change:'+5.9%', up:true },
+];
+
+const newsItems = [
+  { en:'Bitcoin ETF inflows hit 3-week high as institutional demand surges.', cn:'比特币ETF资金流入创三周新高，机构需求激增。', time:'2h ago · 2小时前', up:true },
+  { en:'SEC delays decision on spot Ethereum ETF, market reacts cautiously.', cn:'美SEC推迟以太坊现货ETF决定，市场谨慎反应。', time:'5h ago · 5小时前', up:false },
+  { en:'On-chain data shows long-term holder accumulation near all-time highs.', cn:'链上数据显示长期持有者在历史高位附近积累。', time:'8h ago · 8小时前', up:true },
+  { en:'Fed signals possible rate cuts in Q3, risk assets rally.', cn:'美联储暗示三季度可能降息，风险资产全线反弹。', time:'12h ago · 12小时前', up:true },
+  { en:'Binance volume drops 18% amid regulatory scrutiny in EU.', cn:'欧盟监管审查下，币安成交量下滑18%。', time:'1d ago · 1天前', up:false },
+];
+
+const chartDatasets = {
+  '1D': [63800,64200,63900,64800,65200,66100,65800,67420,68100,67900,68400,67420],
+  '1W': [61000,62500,63800,65500,64200,66100,67420],
+  '1M': [55000,57200,59800,61500,63000,60500,62000,65000,64200,67420],
+  '3M': [42000,46000,50000,54000,52000,58000,62000,60000,65000,67420],
+};
+const predExtension = {
+  '1D': [67420, 68200, 69500],
+  '1W': [67420, 68900, 70200],
+  '1M': [67420, 69000, 71500],
+  '3M': [67420, 70000, 74000],
+};
+
+/* ────────────────────────────────────────────────────
+   STATE
+──────────────────────────────────────────────────── */
+let lang = 'en';
+let selectedCoin = 0;
+let currentTf = '1W';
+
+/* ────────────────────────────────────────────────────
+   TICKER
+──────────────────────────────────────────────────── */
+function buildTicker() {
+  const items = [...tickerData, ...tickerData].map(c =>
+    `<div class="ticker-item">
+      <span class="ticker-sym">${c.sym}</span>
+      <span class="ticker-price">${c.price}</span>
+      <span class="${c.up ? 'ticker-up' : 'ticker-down'}">${c.change}</span>
+    </div>`
+  ).join('');
+  document.getElementById('tickerInner').innerHTML = items;
+}
+
+/* ────────────────────────────────────────────────────
+   COINS
+──────────────────────────────────────────────────── */
+function renderCoins() {
+  document.getElementById('coinsGrid').innerHTML = coins.map((c, i) => `
+    <div class="coin-card${i === selectedCoin ? ' selected' : ''}" onclick="selectCoin(${i})">
+      <div class="coin-top">
+        <div>
+          <div class="coin-sym">${c.sym}</div>
+          <div class="coin-name">${lang === 'en' ? c.nameEn : c.nameCn}</div>
+        </div>
+        <div class="coin-price-wrap">
+          <div class="coin-price ${c.up ? 'text-up' : 'text-down'}">${c.price}</div>
+          <div class="coin-change ${c.up ? 'text-up' : 'text-down'}">${c.change}</div>
+        </div>
+      </div>
+      <span class="badge ${c.signalClass}">${lang === 'en' ? c.signal.toUpperCase() : c.signalCn}</span>
+    </div>
+  `).join('');
+}
+
+function selectCoin(i) {
+  selectedCoin = i;
+  renderCoins();
+  updateChartTitle();
+  updateChart();
+}
+
+/* ────────────────────────────────────────────────────
+   METRICS
+──────────────────────────────────────────────────── */
+function renderMetrics() {
+  document.getElementById('metricsGrid').innerHTML = metrics.map(m => `
+    <div class="metric-card">
+      <div class="metric-label">${lang === 'en' ? m.en : m.cn}</div>
+      ${lang === 'en' ? `<div class="metric-label-cn">${m.cn}</div>` : ''}
+      <div class="metric-val">${m.val}</div>
+    </div>
+  `).join('');
+}
+
+/* ────────────────────────────────────────────────────
+   PREDICTION BARS
+──────────────────────────────────────────────────── */
+function renderPredBars() {
+  document.getElementById('predBars').innerHTML = predictions.map(p => `
+    <div class="pred-row">
+      <div class="pred-label">${lang === 'en' ? p.en : p.cn}</div>
+      <div class="pred-bar-bg">
+        <div class="pred-bar-fill" style="width:${p.pct}%; background:${p.color};"></div>
+      </div>
+      <div class="pred-pct" style="color:${p.color};">${p.pct}%</div>
+    </div>
+  `).join('');
+}
+
+/* ────────────────────────────────────────────────────
+   NEWS
+──────────────────────────────────────────────────── */
+function renderNews() {
+  document.getElementById('newsList').innerHTML = newsItems.map(n => `
+    <div class="news-item">
+      <div class="news-en" ${lang === 'zh' ? 'style="display:none;"' : ''}>
+        <span class="news-dot" style="background:${n.up ? 'var(--up)' : 'var(--down)'};"></span>${n.en}
+      </div>
+      <div class="news-cn">
+        ${lang === 'zh' ? '<span class="news-dot" style="background:' + (n.up ? 'var(--up)' : 'var(--down)') + ';"></span>' : ''}${n.cn}
+      </div>
+      <div class="news-time">${n.time}</div>
+    </div>
+  `).join('');
+}
+
+/* ────────────────────────────────────────────────────
+   MOVERS
+──────────────────────────────────────────────────── */
+function renderMovers() {
+  document.getElementById('moversList').innerHTML = movers.map(m => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:0.5px solid var(--border);">
+      <span style="font-size:13px;font-weight:700;color:var(--text);">${m.sym}</span>
+      <span style="font-size:12px;font-weight:700;" class="${m.up ? 'text-up' : 'text-down'}">${m.change}</span>
+    </div>
+  `).join('');
+}
+
+/* ────────────────────────────────────────────────────
+   CHART
+──────────────────────────────────────────────────── */
+let priceChartObj;
+
+function getChartLabels(tf) {
+  const sets = {
+    '1D': ['8am','9am','10am','11am','12pm','1pm','2pm','3pm','4pm','5pm','6pm','Now'],
+    '1W': ['Mon','Tue','Wed','Thu','Fri','Sat','Now'],
+    '1M': ['W1','W2','W3','W4','W5','W6','W7','W8','W9','Now'],
+    '3M': ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Now'],
+  };
+  return sets[tf];
+}
+
+function updateChart() {
+  if (priceChartObj) priceChartObj.destroy();
+  const tf = currentTf;
+  const actual = chartDatasets[tf];
+  const pred = predExtension[tf];
+  const labels = [...getChartLabels(tf), '+1', '+2'];
+
+  const actualPadded = [...actual, null, null];
+  const predPadded = [...Array(actual.length - 1).fill(null), ...pred];
+
+  priceChartObj = new Chart(document.getElementById('priceChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Price',
+          data: actualPadded,
+          borderColor: '#f0a500',
+          backgroundColor: 'rgba(240,165,0,0.06)',
+          borderWidth: 2,
+          pointRadius: 2.5,
+          pointBackgroundColor: '#f0a500',
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: 'Predicted',
+          data: predPadded,
+          borderColor: '#00c987',
+          borderDash: [5, 4],
+          borderWidth: 1.5,
+          pointRadius: 2.5,
+          pointBackgroundColor: '#00c987',
+          tension: 0.4,
+          fill: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          backgroundColor: '#1a1e27',
+          titleColor: '#8a8f9e',
+          bodyColor: '#e8eaf0',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          callbacks: {
+            label: ctx => ctx.raw != null ? ' $' + ctx.raw.toLocaleString() : null
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#555b6e', font: { size: 10, family: 'Space Mono' } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: {
+            color: '#555b6e',
+            font: { size: 10, family: 'Space Mono' },
+            callback: v => '$' + Math.round(v / 1000) + 'k'
+          }
+        }
+      }
+    }
+  });
+}
+
+function setTf(el, tf) {
+  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentTf = tf;
+  updateChart();
+}
+
+function updateChartTitle() {
+  const c = coins[selectedCoin];
+  document.getElementById('chartTitle').textContent = `${c.sym}/USDT ${lang === 'en' ? 'Price Chart' : '价格图表'}`;
+  document.getElementById('chartTitleCn').textContent = `${c.nameCn}/美元 7日价格走势`;
+}
+
+/* ────────────────────────────────────────────────────
+   DOMINANCE CHART
+──────────────────────────────────────────────────── */
+let domChartObj;
+function buildDomChart() {
+  if (domChartObj) domChartObj.destroy();
+  domChartObj = new Chart(document.getElementById('domChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['BTC', 'ETH', 'BNB', 'SOL', 'Others'],
+      datasets: [{
+        data: [52, 17, 4, 3, 24],
+        backgroundColor: ['#f0a500', '#00c987', '#3b82f6', '#a855f7', '#374151'],
+        borderWidth: 0,
+        hoverOffset: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#8a8f9e',
+            font: { size: 10, family: 'Space Mono' },
+            boxWidth: 10,
+            padding: 8,
+          }
+        },
+        tooltip: {
+          backgroundColor: '#1a1e27',
+          titleColor: '#8a8f9e',
+          bodyColor: '#e8eaf0',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}%` }
+        }
+      }
+    }
+  });
+}
+
+/* ────────────────────────────────────────────────────
+   LANGUAGE
+──────────────────────────────────────────────────── */
+const i18n = {
+  predictLabel:   { en: 'Predict', zh: '预测' },
+  chartTitle:     { en: 'BTC/USDT Price Chart', zh: 'BTC/USDT 价格图表' },
+  predTitle:      { en: '7-Day AI Prediction', zh: '7日AI预测' },
+  newsTitle:      { en: 'Market Signals & News', zh: '市场信号与新闻' },
+  fearTitle:      { en: 'Fear & Greed Index', zh: '恐惧与贪婪指数' },
+  moversTitle:    { en: 'Top Movers 24h', zh: '24h涨跌榜' },
+  domTitle:       { en: 'BTC Dominance', zh: '比特币市场占比' },
+  legendActual:   { en: 'Actual', zh: '实际' },
+  legendPred:     { en: 'Predicted', zh: '预测' },
+  fearLabel:      { en: 'Greed', zh: '贪婪' },
+  fearText:       { en: 'Fear', zh: '恐惧' },
+  greedText:      { en: 'Greed', zh: '贪婪' },
+};
+
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', (l === 'en' && b.textContent === 'EN') || (l === 'zh' && b.textContent === '中文'));
+  });
+  Object.entries(i18n).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val[l];
+  });
+  const cnEls = ['chartTitleCn','predTitleCn','newsTitleCn','fearTitleCn','moversTitleCn','domTitleCn','fearLabelCn'];
+  cnEls.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = l === 'zh' ? 'none' : 'block';
+  });
+  renderCoins();
+  renderMetrics();
+  renderPredBars();
+  renderNews();
+  updateChartTitle();
+  document.getElementById('overallSignal').textContent = l === 'en' ? 'BULLISH · 看涨' : '看涨 · BULLISH';
+  document.getElementById('aiText').style.display = l === 'zh' ? 'none' : 'block';
+}
+
+/* ────────────────────────────────────────────────────
+   PREDICT
+──────────────────────────────────────────────────── */
+function runPredict() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+  alert(lang === 'en'
+    ? `Fetching AI prediction for: ${q.toUpperCase()}\n\n(Connect to Anthropic API or CoinGecko to enable live predictions)`
+    : `正在获取 ${q.toUpperCase()} 的AI预测...\n\n（连接Anthropic API或CoinGecko以启用实时预测）`
+  );
+}
+
+/* ────────────────────────────────────────────────────
+   INIT
+──────────────────────────────────────────────────── */
+function init() {
+  updateChart();
+  buildDomChart();
+}
+
+buildTicker();
+renderCoins();
+renderMetrics();
+renderPredBars();
+renderNews();
+renderMovers();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" onload="init()"></script>
+</body>
+</html>
